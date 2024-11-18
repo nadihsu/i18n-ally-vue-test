@@ -86,7 +86,8 @@ class VueSFCFramework extends Framework {
     const ranges: ScopeRange[] = []
     const text = document.getText()
     // const regUse = /useTranslation\(\s*(?:\[\s*['"`](?<translationKeys>.*?)['"`](?:,\s*['"`][^"'`]*['"`])*\s*\]|\(\))?\s*\)/g
-    const regUse = /useTranslation\(\s*\[\s*(['"`](?:\w+(?:\.\w+)*)['"`](?:\s*,\s*['"`](?:\w+(?:\.\w+)*)['"`])*)\s*\]/g
+    // const regUse = /useTranslation\(\s*\[\s*(['"`](?:\w+(?:\.\w+)*)['"`](?:\s*,\s*['"`](?:\w+(?:\.\w+)*)['"`])*)\s*\]/g
+    const regUse = /useTranslation\(\s*\[\s*(['"`](?:\w+(?:\.\w+)*)['"`](?:\s*,\s*['"`](?:\w+(?:\.\w+)*)['"`])*\s*,?)\s*\]/g
 
     for (const match of text.matchAll(regUse)) {
       if (typeof match.index !== 'number')
@@ -97,11 +98,11 @@ class VueSFCFramework extends Framework {
         .split(',')
         .map(ns => ns.trim().replace(/['"`,\s]/g, ''))
         .filter((ns) => {
-          // 保留所有非 common 的命名空間，包括帶點號的
-          return ns && ns !== 'common'
+          // 保留所有非 global 的命名空間，包括帶點號的
+          return ns && ns !== 'global'
         })
 
-      // 如果沒有非 common 的 namespace，使用預設值
+      // 如果沒有非 global 的 namespace，使用預設值
       if (namespaces.length === 0)
         namespaces.push(Config.defaultNamespace as string)
 
@@ -116,8 +117,8 @@ class VueSFCFramework extends Framework {
       ranges.push({
         start: match.index,
         end: text.length,
-        namespace, // 第一個非 common namespace
-        namespaces, // 儲存所有非 common namespaces
+        namespace, // 第一個非 global namespace
+        namespaces, // 儲存所有非 global namespaces
       })
     }
 

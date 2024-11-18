@@ -64,7 +64,6 @@ export class KeyDetector {
       const currentScope = scopes
         .filter(s => s.start < offset && offset < s.end)
         .pop() // 取最後一個匹配的 scope，因為它應該是最近的
-
       return currentScope?.namespace || Config.defaultNamespace
     }
 
@@ -110,16 +109,25 @@ export class KeyDetector {
         return this._get_keys_cache[filepath]
 
       // regs = regs ?? Global.getUsageMatchRegex(document.languageId, filepath)
+      // regs = regs ?? [
+      //   // eslint-disable-next-line prefer-regex-literals
+      //   new RegExp('\\Wtr\\(\'([\\w.-]+)\'(?:\\s*,\\s*{\\s*nsIndex:\\s*(\\d+)\\s*})?\\)', 'g'),
+      // ]
       regs = regs ?? [
         // eslint-disable-next-line prefer-regex-literals
-        new RegExp('\\Wtr\\(\'([\\w.-]+)\'(?:\\s*,\\s*{\\s*nsIndex:\\s*(\\d+)\\s*})?\\)', 'g'),
+        new RegExp('\\Wtr[\\w]*\\(\'([\\w.-]+)\'(?:\\s*,\\s*(?:\\[[^\\]]*\\]|{[^}]*}))??(?:\\s*,\\s*{\\s*nsIndex:\\s*(\\d+)\\s*})?\\)', 'g'),
       ]
       text = document.getText()
       scopes = scopes || Global.enabledFrameworks.flatMap(f => f.getScopeRange(document) || [])
-
+      console.log({ scopes, namespace: scopes[0].namespace })
+      // rewriteContext = {
+      //   targetFile: filepath,
+      //   namespace: scopes?.[0]?.namespace,
+      // }
       rewriteContext = {
         targetFile: filepath,
-        namespace: scopes?.[0]?.namespace,
+        namespaces: scopes?.map(scope => scope.namespace) || [],
+        namespace: undefined, // 讓 handleRegexMatch 自己根據 nsIndex 決定使用哪個 namespace
       }
     }
     else {

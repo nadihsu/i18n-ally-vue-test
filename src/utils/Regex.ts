@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { sortBy } from 'lodash'
 import { QUOTE_SYMBOLS } from '../meta'
 import { KeyInDocument, RewriteKeyContext } from '../core/types'
@@ -17,9 +18,20 @@ export function handleRegexMatch(
 ): KeyInDocument | undefined {
   const matchString = match[0]
   let key = match[1]
-  const scope = scopes?.[0]
   const nsIndex = match[2] ? parseInt(match[2], 10) : 0
   if (!key) return
+  // 根據 tr 名稱找對應的 scope
+  const trName = matchString.match(/tr\w*/)![0]
+  const targetScope = scopes.find((s) => {
+    const scopeText = text.slice(s.start, s.end)
+    return scopeText.includes(`useTranslation(['${s.namespace}']`)
+  })
+
+  // 如果是別名 tr，使用對應的 scope.namespace
+  // 如果是原始 tr，使用第一個 scope
+  const scope = trName !== 'tr' ? targetScope : scopes[0]
+
+  console.log(targetScope)
 
   const start = match.index + matchString.lastIndexOf(key)
   const end = start + key.length
@@ -29,12 +41,12 @@ export function handleRegexMatch(
   starts.push(start)
 
   const namespaces = scope?.namespaces || [defaultNamespace]
+  // const namespaces = scope?.namespaces || rewriteContext?.namespaces || [defaultNamespace]
   const namespace = namespaces[nsIndex] || namespaces[0] || defaultNamespace
 
+  // Rest of the logic remains same
   if (namespace !== defaultNamespace) {
-    // 檢查 key 是否存在於指定的 namespace
     const namespaceKey = `${namespace}.${key}`
-
     key = CurrentFile.loader.exists(namespaceKey)
       ? namespaceKey
       : `${defaultNamespace}.${key}`
@@ -48,14 +60,62 @@ export function handleRegexMatch(
       ...rewriteContext,
       namespace,
     })
-    return {
-      key,
-      start,
-      end,
-      quoted,
-    }
+    return { key, start, end, quoted }
   }
 }
+
+// export function handleRegexMatch(
+//   text: string,
+//   match: RegExpExecArray,
+//   dotEnding = false,
+//   rewriteContext?: RewriteKeyContext,
+//   scopes: ScopeRange[] = [],
+//   defaultNamespace?: string,
+//   starts: number[] = [],
+// ): KeyInDocument | undefined {
+//   const matchString = match[0]
+//   let key = match[1]
+//   const scope = scopes?.[0]
+//   const nsIndex = match[2] ? parseInt(match[2], 10) : 0
+//   if (!key) return
+
+//   const start = match.index + matchString.lastIndexOf(key)
+//   const end = start + key.length
+//   const quoted = QUOTE_SYMBOLS.includes(text[start - 1])
+
+//   if (starts.includes(start)) return
+//   starts.push(start)
+
+//   const namespaces = scope?.namespaces || [defaultNamespace]
+//   console.log({ namespaces, nsIndex, namespace: namespaces[0] })
+//   const namespace = namespaces[nsIndex] || namespaces[0] || defaultNamespace
+
+//   if (namespace !== defaultNamespace) {
+//     // 檢查 key 是否存在於指定的 namespace
+//     const namespaceKey = `${namespace}.${key}`
+//     console.log({ namespaceKey })
+
+//     key = CurrentFile.loader.exists(namespaceKey)
+//       ? namespaceKey
+//       : `${defaultNamespace}.${key}`
+//   }
+//   else {
+//     key = `${namespace}.${key}`
+//   }
+
+//   if (dotEnding || !key.endsWith('.')) {
+//     key = CurrentFile.loader.rewriteKeys(key, 'reference', {
+//       ...rewriteContext,
+//       namespace,
+//     })
+//     return {
+//       key,
+//       start,
+//       end,
+//       quoted,
+//     }
+//   }
+// }
 
 // export function regexFindKeys(
 //   text: string,

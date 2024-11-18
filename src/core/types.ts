@@ -142,6 +142,7 @@ export interface RewriteKeyContext {
   locale?: string
   targetFile?: string
   namespace?: string
+  namespaces?: Array<string | undefined>
 }
 
 export interface DataProcessContext {
