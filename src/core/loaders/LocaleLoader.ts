@@ -310,6 +310,9 @@ export class LocaleLoader extends Loader {
           if (Global.namespaceEnabled) {
             const node = this.getNodeByKey(keypath)
             keypath = NodeHelper.getPathWithoutNamespace(keypath, node, pending.namespace)
+            // 處理 defaultNamespace 特例
+            if (keypath.startsWith('global.'))
+              keypath = keypath.replace('global.', '')
           }
 
           modified = applyPendingToObject(

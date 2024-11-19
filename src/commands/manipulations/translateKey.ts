@@ -1,4 +1,5 @@
-import { window } from 'vscode'
+import path from 'path'
+import { window, workspace } from 'vscode'
 import { getNodeOrRecord, CommandOptions, getNode } from './common'
 import { LocaleTreeItem, ProgressSubmenuItem } from '~/views'
 import { Translator, CurrentFile, Config, Global, LocaleNode, AccaptableTranslateItem } from '~/core'
@@ -64,5 +65,24 @@ export async function TranslateKeys(
       nodes.push(node)
   }
 
-  Translator.translateNodes(CurrentFile.loader, nodes, source, targetLocales)
+  let targetShareFile: string | undefined
+
+  if (nodes[0]?.keypath.startsWith('global.')) {
+    const files = await workspace.findFiles(`**/locales/${source}/share/*.json`)
+    const fileChoice = await window.showQuickPick(
+      files.map(file => ({
+        label: path.basename(file.fsPath),
+        description: `Write to share/${path.basename(file.fsPath)}`,
+        uri: file,
+      })),
+      {
+        placeHolder: 'Select file to write to',
+      },
+    )
+
+    if (fileChoice)
+      targetShareFile = path.basename(fileChoice.uri.fsPath)
+  }
+
+  Translator.translateNodes(CurrentFile.loader, nodes, source, targetLocales, targetShareFile)
 }

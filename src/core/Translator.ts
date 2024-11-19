@@ -82,6 +82,7 @@ export class Translator {
     nodes: AccaptableTranslateItem[],
     sourceLanguage: string,
     targetLocales?: string[],
+    targetShareFile?: string,
   ) {
     if (!nodes.length)
       return
@@ -152,7 +153,7 @@ export class Translator {
             .slice(i * parallels, (i + 1) * parallels)
             .map(job => doJob(job)),
         )
-        this.saveTranslations(loader, results)
+        this.saveTranslations(loader, results, targetShareFile)
       }
 
       // translating done
@@ -280,6 +281,7 @@ export class Translator {
   private static async saveTranslations(
     loader: Loader,
     results: ({result: PendingWrite | undefined; job: TranslateJob})[],
+    targetShareFile?: string,
   ) {
     const now = new Date().toISOString()
     const r = results.filter(i => i.result) as ({result: PendingWrite; job: TranslateJob})[]
@@ -296,7 +298,20 @@ export class Translator {
       })))
     }
     else {
-      await loader.write(r.map(i => i.result))
+      // 處理 global namespace
+      const writes = r.map((i) => {
+        const result = i.result
+        if (result.keypath.startsWith('global.')) {
+          return {
+            ...result,
+            keypath: result.keypath.replace('global.', ''),
+            filepath: result.filepath?.replace('/global.json', `/share/${targetShareFile}`),
+          }
+        }
+        return result
+      })
+
+      await loader.write(writes)
     }
   }
 

@@ -55,8 +55,26 @@ export async function GoToKey(item?: LocaleTreeItem | CommandOptions | ProgressR
     if (!record || !record.filepath)
       return
 
-    const filepath = record.filepath
+    let filepath = record.filepath
     const keypath = node.keypath
+
+    // 處理 global namespace
+    if (keypath.startsWith('global.')) {
+      const files = await workspace.findFiles(`**/locales/${locale}/share/*.json`)
+      const fileChoice = await window.showQuickPick(
+        files.map(file => ({
+          label: path.basename(file.fsPath),
+          description: `Write to share/${path.basename(file.fsPath)}`,
+          uri: file,
+        })),
+        {
+          placeHolder: 'Select file to navigate to',
+        },
+      )
+
+      if (fileChoice)
+        filepath = fileChoice.uri.fsPath
+    }
 
     const document = await workspace.openTextDocument(filepath)
     const editor = await window.showTextDocument(document)

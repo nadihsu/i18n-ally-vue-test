@@ -119,7 +119,6 @@ export class KeyDetector {
       ]
       text = document.getText()
       scopes = scopes || Global.enabledFrameworks.flatMap(f => f.getScopeRange(document) || [])
-      console.log({ scopes, namespace: scopes[0].namespace })
       // rewriteContext = {
       //   targetFile: filepath,
       //   namespace: scopes?.[0]?.namespace,

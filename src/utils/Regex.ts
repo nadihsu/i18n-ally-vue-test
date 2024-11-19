@@ -31,8 +31,6 @@ export function handleRegexMatch(
   // 如果是原始 tr，使用第一個 scope
   const scope = trName !== 'tr' ? targetScope : scopes[0]
 
-  console.log(targetScope)
-
   const start = match.index + matchString.lastIndexOf(key)
   const end = start + key.length
   const quoted = QUOTE_SYMBOLS.includes(text[start - 1])
